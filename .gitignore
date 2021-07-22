@@ -108,4 +108,6 @@ venv.bak/
 .idea
 .idea/
 
-
+# files
+*.hdf5
+*.pkl

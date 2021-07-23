@@ -19,12 +19,6 @@ script:
   # test import
   - python -c "import spatialOmics"
 
-  # ensure installed commands helps run successfully
-  # (add as required)
-  - salutation --help
-  - brief_salutation --help
-  - a_shell_script
-
   # run unit tests
   - python -m pytest -sv --cov=spatialOmics --cov-fail-under=65
 

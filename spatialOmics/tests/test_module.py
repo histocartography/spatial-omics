@@ -1,25 +1,32 @@
 """Unit testing for module."""
 import pytest
-from spatialOmics.module import Foo
+import numpy as np
+from spatialOmics import SpatialOmics
+from tifffile import imsave
 
+@pytest.fixture(scope='module')
+def so():
+    return SpatialOmics()
 
-@pytest.mark.parametrize(
-    "the_argument",
-    [(0), (10 ** 6), (42)],
-)
-def test_foo(the_argument):
-    """Pytest example"""
-    assert (
-        "works"
-        in Foo(a=the_argument).method_that_would_really_waste_your_time_if_it_fails()
-    )
+@pytest.fixture(scope="session")
+def image_file(tmpdir_factory):
+    img = np.zeros((5,20,20), 'uint16')
+    fn = tmpdir_factory.mktemp("data").join('image.tiff')
+    imsave(fn, img)
+    return fn
 
+@pytest.fixture(scope="session")
+def mask_file(tmpdir_factory):
+    img = np.zeros((20,20))
+    fn = tmpdir_factory.mktemp("data").join("mask.tiff")
+    imsave(fn, img)
+    return fn
 
-def test_make_foo_fail():
-    """Never trust a test that doesn't fail"""
-    foo = Foo(1.0)  # type: ignore
-    with pytest.raises(TypeError):
-        foo.method_that_would_really_waste_your_time_if_it_fails()
+@pytest.mark.parametrize('in_memory, to_store', [(True, True), (True, False), (False, True)])
+def test_add_image(so: SpatialOmics, image_file, in_memory, to_store):
+    so.add_image('spl1', str(image_file), in_memory=in_memory, to_store=to_store)
+    so.get_image('spl1')
 
-
-# fixtures are another great feature of pytest, that allow arrangement of the test and cleanup after
+def test_add_mask(so: SpatialOmics, mask_file):
+    so.add_mask('spl1', 'mask1', str(mask_file))
+    so.get_mask('spl1', 'mask1')

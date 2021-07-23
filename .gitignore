@@ -112,3 +112,5 @@ venv.bak/
 *.hdf5
 *.h5py
 *.pkl
+*.tif?
+*.swp

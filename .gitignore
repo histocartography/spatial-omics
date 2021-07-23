@@ -110,4 +110,5 @@ venv.bak/
 
 # files
 *.hdf5
+*.h5py
 *.pkl

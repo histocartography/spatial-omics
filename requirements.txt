@@ -5,5 +5,5 @@ pandas
 scikit-image
 tqdm
 h5py
-pytables
+tables
 scikit-learn

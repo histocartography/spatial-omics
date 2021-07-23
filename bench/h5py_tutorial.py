@@ -5,7 +5,7 @@ import pandas as pd
 import networkx as nx
 
 # %% creat file
-# f = h5py.File("mytestfile.hdf5", "w")
+f = h5py.File("mytestfile.hdf5", "w")
 # f = h5py.File("mytestfile.hdf5", "r")
 
 # %% create data set

@@ -19,7 +19,7 @@ class SpatialOmics():
         self.graph_engine = 'networkx'
         self.random_seed = 42  # for reproducibility
         self.pickle_file = ''  # backend store
-        self.h5py_file = ''  # backend store
+        self.h5py_file = 'spatialOmics.h5py'  # backend store
 
         self.obs = {}  # container for observation level features
         self.obsm = {}  # container for multidimensional observation level features
@@ -36,53 +36,61 @@ class SpatialOmics():
         self.images = {}
         self.masks = {}
 
-    def add_image(self, spl, file):
+    def add_image(self, spl, file, in_memory=True, to_store=True):
         """Add the image for a given sample"""
-        if spl not in self.images:
-            self.masks[spl] = {}
-        self.images[spl] = io.imread(file)
+        im = io.imread(file)
+
+        if to_store:
+            path = f'images/{spl}/'
+            with h5py.File(self.h5py_file, 'a') as f:
+                if path in f:
+                    del f[path]
+                f.create_dataset(path, data=im)
+
+        if in_memory:
+            if spl not in self.images:
+                self.images[spl] = {}
+            self.images[spl] = im
 
     def get_image(self, spl):
         """Get the image of a given sample"""
         if spl in self.images:
             return self.images[spl]
-        elif True:
-            f = self.spl.loc[spl].file_fullstack
-            self.add_image(spl, f)
-            return self.images[spl]
         else:
-            with h5py.File(self.h5py_file) as f:
-                path = f'masks/{spl}/'
+            with h5py.File(self.h5py_file, 'r') as f:
+                path = f'images/{spl}/'
                 if path in f:
-                    return f[path][spl][...]
+                    return f[path][:]
                 else:
                     raise KeyError(f'no images exists for {spl}.')
 
-    def add_mask(self, spl, mask, file):
+    def add_mask(self, spl, mask, file, in_memory=True, to_store=True):
         """Add a mask for a given sample"""
-        if spl not in self.masks:
-            self.masks[spl] = {}
-        self.masks[spl].update({mask:io.imread(file)})
+        im = io.imread(file)
+
+        if to_store:
+            path = f'masks/{spl}/{mask}/'
+            with h5py.File(self.h5py_file, 'a') as f:
+                if path in f:
+                    del f[path]
+                f.create_dataset(path, data=im)
+
+        if in_memory:
+            if spl not in self.masks:
+                self.masks[spl] = {}
+            self.masks[spl][mask] = im
 
     def get_mask(self, spl, mask):
         """Get a particular mask of a given sample"""
         if spl in self.masks and mask in self.masks[spl]:
             return self.masks[spl][mask]
-        elif True:
-            f = self.spl.loc[spl].file_cellmask
-            self.add_mask(spl, mask, f)
-            return self.masks[spl][mask]
-            # if spl not in self.mask:
-            #     self.masks[spl] = {}
-            # self.masks[spl].update({'cellmasks': io.imread(f)})
         else:
-            with h5py.File(self.h5py_file) as f:
+            with h5py.File(self.h5py_file, 'r') as f:
                 path = f'masks/{spl}/{mask}'
                 if path in f:
                     return f[path][spl][...]
                 else:
                     raise KeyError(f'no {mask} mask exists for {spl}.')
-                return self.masks[spl][mask]
 
     def __str__(self):
         s = """SpatialOmics object

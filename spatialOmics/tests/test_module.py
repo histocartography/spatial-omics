@@ -30,3 +30,9 @@ def test_add_image(so: SpatialOmics, image_file, in_memory, to_store):
 def test_add_mask(so: SpatialOmics, mask_file):
     so.add_mask('spl1', 'mask1', str(mask_file))
     so.get_mask('spl1', 'mask1')
+
+def test_to_h5py(so: SpatialOmics):
+    so.to_h5py()
+
+def test_from_h5py(so: SpatialOmics):
+    so.from_h5py()

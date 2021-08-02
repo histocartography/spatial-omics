@@ -38,7 +38,7 @@ class SpatialOmics:
         im = io.imread(file)
 
         if to_store:
-            path = f'images/{spl}/'
+            path = f'images/{spl}'
             with h5py.File(self.h5py_file, 'a') as f:
                 if path in f:
                     del f[path]
@@ -55,7 +55,7 @@ class SpatialOmics:
             return self.images[spl]
         else:
             with h5py.File(self.h5py_file, 'r') as f:
-                path = f'images/{spl}/'
+                path = f'images/{spl}'
                 if path in f:
                     return f[path][:]
                 else:
@@ -66,7 +66,7 @@ class SpatialOmics:
         im = io.imread(file)
 
         if to_store:
-            path = f'masks/{spl}/{mask}/'
+            path = f'masks/{spl}/{mask}'
             with h5py.File(self.h5py_file, 'a') as f:
                 if path in f:
                     del f[path]
@@ -85,13 +85,14 @@ class SpatialOmics:
             with h5py.File(self.h5py_file, 'r') as f:
                 path = f'masks/{spl}/{mask}'
                 if path in f:
-                    return f[path][spl][...]
+                    return f[path][...]
                 else:
                     raise KeyError(f'no {mask} mask exists for {spl}.')
 
     def __str__(self):
-        s = """SpatialOmics object
-        With this info.
+        s = f"""
+        SpatialOmics object with
+        {len(self.spl)} samples
         """
         return s
 
@@ -116,39 +117,9 @@ class SpatialOmics:
         with h5py.File(file, mode='w') as f:
             f.create_dataset('h5py_file', data=self.h5py_file)
 
-            # obs
-            for spl in self.obs:
-                # use pandas function
-                self.obs[spl].to_hdf(file, f'obs/{spl}')
-
             # obsm
             for spl in self.obsm:
                 f.create_dataset(f'obsm/{spl}', data=self.obsm[spl])
-
-            # spl
-            self.spl.to_hdf(file, 'spl')
-
-            # var
-            for spl in self.var:
-                # use pandas function
-                self.var[spl].to_hdf(file, f'var/{spl}')
-
-            # X
-            for spl in self.X:
-                # use pandas function
-                self.obs[spl].to_hdf(file, f'X/{spl}')
-
-            # uns
-            # TODO: currently we do not support storing uns to h5py due to datatype restrictions
-
-            # G
-            for spl in self.G:
-                for key in self.G[spl]:
-                    g = self.G[spl][key]
-                    df = nx.to_pandas_edgelist(g)
-
-                    # use pandas function
-                    df.to_hdf(file, f'G/{spl}/{key}')
 
             # images
             for spl in self.images:
@@ -160,6 +131,37 @@ class SpatialOmics:
                 for key in self.masks[spl].keys():
                     msk = self.masks[spl][key]
                     f.create_dataset(f'masks/{spl}/{key}', data=msk)
+
+            # uns
+            # TODO: currently we do not support storing uns to h5py due to datatype restrictions
+
+        # we need to write the dataframes outside the context manager because the file is locked
+        # spl
+        self.spl.to_hdf(file, 'spl', format="table")
+
+        # var
+        for spl in self.var:
+            # use pandas function
+            self.var[spl].to_hdf(file, f'var/{spl}', format="table")
+
+        # X
+        for spl in self.X:
+            # use pandas function
+            self.X[spl].to_hdf(file, f'X/{spl}', format="table")
+
+        # G
+        for spl in self.G:
+            for key in self.G[spl]:
+                g = self.G[spl][key]
+                df = nx.to_pandas_edgelist(g)
+
+                # use pandas function
+                df.to_hdf(file, f'G/{spl}/{key}', format="table")
+
+        # obs
+        for spl in self.obs:
+            # use pandas function
+            self.obs[spl].to_hdf(file, f'obs/{spl}', format="table")
 
         print(f'File `{os.path.basename(file)}` saved to {os.path.abspath(file)}')
         print(f'File size: {os.path.getsize(file) / (1024 * 1024):.2f} MB')
@@ -209,8 +211,8 @@ class SpatialOmics:
             # G
             if 'G' in f:
                 for spl in f['G'].keys():
-                    for key in spl:
-                        if spl not in so.G:
+                    for key in f[f'G/{spl}'].keys():
+                        if key not in so.G:
                             so.G[spl] = {}
                         so.G[spl][key] = nx.from_pandas_edgelist(pd.read_hdf(file, f'G/{spl}/{key}'))
 
@@ -243,8 +245,7 @@ class SpatialOmics:
         raise NotImplementedError('This version does not yet support saving pickled instances')
 
     @classmethod
-    def from_pickle(cls, file: str = None)\
-            :
+    def from_pickle(cls, file: str = None) -> None:
         """Load spatialOmics instance from pickled file.
 
         Args:

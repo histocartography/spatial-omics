@@ -1,7 +1,6 @@
 #pip package names required by the package, and exact versions you know to work
-click==7.1.2
 numpy
-pandas
+pandas<1.2
 scikit-image
 tqdm
 h5py

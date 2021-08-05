@@ -87,3 +87,8 @@ with tempfile.TemporaryDirectory() as tmpdir:
         # add segmentation mask
         so.add_mask(so.spl.index[0], 'cellmasks', os.path.join(tmpdir, root, fmask), to_store=False)
 ```
+
+# Installation
+```{bash}
+pip install "git+git://github.com/histocartography/spatial-omics.git@master"
+```

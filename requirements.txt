@@ -2,6 +2,7 @@
 numpy
 pandas<1.3
 scikit-image
+seaborn
 tqdm
 h5py
 tables

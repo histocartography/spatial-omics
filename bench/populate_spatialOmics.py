@@ -33,4 +33,4 @@ import h5py
 import pandas as pd
 
 fname = "/Users/art/Documents/spatial-omics/spatialOmics.hdf5"
-so = SpatialOmics.form_h5py(fname)
+so = SpatialOmics.from_h5py(fname)

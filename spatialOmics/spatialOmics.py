@@ -1,6 +1,7 @@
 import pandas as pd
 import networkx as nx
 from skimage import io
+import seaborn as sns
 
 import os
 import copy
@@ -10,6 +11,10 @@ import h5py
 
 # %%
 class SpatialOmics:
+    cmaps = {
+        'default': sns.color_palette('Reds', as_cmap=True),
+        'category': sns.color_palette('Set3', as_cmap=True)
+    }
 
     def __init__(self):
 
@@ -24,8 +29,10 @@ class SpatialOmics:
         self.splm = {}  # container for multidimensional sample level features
         self.var = {}  # container with variable descriptions of X
         self.X = {}  # container for cell level expression data of each spl
-        self.uns = {}  # unstructured container
         self.G = {}  # graphs
+        self.uns = {}  # unstructured container
+        self.uns.update({'cmaps':self.cmaps,
+                         'cmap_labels': {}})
 
         # self.obs_keys = None  # list of observations in self.obs.index
         self.spl_keys = None  # list of samples in self.spl.index
@@ -91,8 +98,9 @@ class SpatialOmics:
 
     def __str__(self):
         s = f"""
-        SpatialOmics object with
-        {len(self.spl)} samples
+SpatialOmics object with
+{len(self.spl)} samples
+
         """
         return s
 
@@ -268,3 +276,111 @@ class SpatialOmics:
 
     def deepcopy(self):
         return copy.deepcopy(self)
+
+    @staticmethod
+    def from_annData(ad: AnnData, img_container: ImageContainer = None,
+          sample_id: str = 'sample_id',
+          img_layer: str = 'image',
+          segmentation_layers: list = ['segmented_watershed']) -> SpatialOmics:
+        """Converts a AnnData instance to a SpatialOmics instance.
+
+        Args:
+            ad: AnnData object
+            img_container: Squidpy Image Container
+            sample_id: column name that identifies different libraries in ad.obs
+
+        Returns:
+            SpatialOmics
+        """
+
+        if sample_id not in ad.obs:
+            sample_name = 'spl_0'
+            ad.obs[sample_id] = sample_name
+            ad.obs[sample_id] = ad.obs[sample_id].astype('category')
+
+        if len(ad.obs[sample_id].unique()) > 1:
+            raise ValueError("""more than 1 sample_id present in ad.obs[sample_id].
+            Please process each each sample individually.""")
+        else:
+            sample_name = ad.obs[sample_id][0]
+
+        so = SpatialOmics()
+        x = pd.DataFrame(ad.X.A, columns=ad.var.index)
+
+        so.X = {sample_name: x}
+        so.obs = {sample_name: ad.obs}
+        so.var = {sample_name: ad.var}
+        so.spl = pd.DataFrame(index=[sample_name])
+
+        if 'spatial' in ad.obsm:
+            coord = ad.obsm['spatial']
+            coord = pd.DataFrame(coord, index=so.obs[sample_name].index, columns=['x','y'])
+            so.obs[sample_name] = pd.concat((so.obs[sample_name], coord), 1)
+
+        if img_container is not None:
+            img = img_container[img_layer]
+            so.images = {sample_name: img}
+
+            segmentations = {}
+            for i in segmentation_layers:
+                if i in img_container:
+                    segmentations.update({i:img_container[i]})
+            so.masks.update({sample_name:segmentations})
+
+        return so
+
+    def to_annData(self,
+        one_adata=True,
+        spatial_keys_so=['x', 'y'],
+        spatial_key_ad='spatial'):
+        """Converts the current SpatialOmics instance into a AnnData instance.
+        Does only takes .X, .obs and .var attributes into account.
+
+        Args:
+            one_adata: bool whether for each sample a individual AnnData should be created
+            spatial_keys_so: tuple column names of spatial coordinates of observations in so.obs[spl]
+            spatial_key_ad: str key added to ad.obsm to store the spatial coordinates
+
+        Returns:
+
+        """
+
+        so = self
+
+        if one_adata:
+            keys = list(so.obs.keys())
+            # we iterate through the keys to ensure that we have the order of the different dicts aligned
+            # we could apply pd.concat directly on the dicts
+
+            X = pd.concat([so.X[i] for i in keys])
+            obs = pd.concat([so.obs[i] for i in keys])
+            obs.index = range(len(obs))
+            var = so.var[keys[0]]
+
+            # create AnnData
+            ad = AnnData(X=X.values, obs=obs, var=var)
+
+            # import spatial coordinates
+            if all([i in obs for i in spatial_keys_so]):
+                spatial_coord = ad.obs[spatial_keys_so]
+                ad.obs = ad.obs.drop(columns=spatial_keys_so)
+                ad.obsm.update({spatial_key_ad: spatial_coord.values})
+
+            return ad
+
+        else:
+            ads = []
+            for spl in so.obs.keys():
+
+                # create AnnData
+                ad = AnnData(X=so.X[spl].values, obs=so.obs[spl], var=so.var[spl])
+
+                # import spatial coordinates
+                if all([i in ad.obs for i in spatial_keys_so]):
+                    spatial_coord = ad.obs[spatial_keys_so]
+                    ad.obs = ad.obs.drop(columns=spatial_keys_so)
+                    ad.obsm.update({spatial_key_ad: spatial_coord.values})
+
+                ads.append(ad)
+            return ads
+

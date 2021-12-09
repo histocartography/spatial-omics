@@ -89,9 +89,10 @@ def so2ad(so: SpatialOmics,
         if all([i in obs for i in spatial_keys_so]):
             spatial_coord = ad.obs[spatial_keys_so]
             ad.obs = ad.obs.drop(columns=spatial_keys_so)
-            ad.obsm.update({spatial_key_ad: spatial_coord})
-
+            ad.obsm.update({spatial_key_ad: spatial_coord.values})
+            
         return ad
+    
     else:
         ads = []
         for spl in so.obs.keys():
@@ -103,7 +104,7 @@ def so2ad(so: SpatialOmics,
             if all([i in ad.obs for i in spatial_keys_so]):
                 spatial_coord = ad.obs[spatial_keys_so]
                 ad.obs = ad.obs.drop(columns=spatial_keys_so)
-                ad.obsm.update({spatial_key_ad: spatial_coord})
+                ad.obsm.update({spatial_key_ad: spatial_coord.values})
 
             ads.append(ad)
         return ads
@@ -347,3 +348,12 @@ sh.pl.spatial(so2, spl, attr='channel0', ax=axs[1], node_size=1)
 sh.pl.spatial(so2, spl, attr='channel0', mode='mask', ax=axs[2], background_color='black')
 fig.tight_layout()
 fig.show()
+
+# %% so to ad
+so = sh.dataset.imc()
+for spl in so.obs:
+    sh.pp.extract_centroids(so,spl)
+ad = so2ad(so)
+ads = so2ad(so, one_adata=False)
+
+# %%

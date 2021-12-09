@@ -3,6 +3,8 @@ import networkx as nx
 from skimage import io
 import seaborn as sns
 from anndata import AnnData
+from squidpy.im import ImageContainer
+from scipy.sparse import issparse
 
 import os
 import copy
@@ -98,11 +100,33 @@ class SpatialOmics:
                     raise KeyError(f'no {mask} mask exists for {spl}.')
 
     def __str__(self):
-        s = f"""
-SpatialOmics object with
-{len(self.spl)} samples
+        l = [len(self.obs[i]) for i in self.obs]
+        a0 = [self.X[i].shape[0] for i in self.X]
+        a1 = [self.X[i].shape[1] for i in self.X]
 
-        """
+        cols_spl = self.spl.columns.to_list()
+
+        cols_obs = set()
+        [cols_obs.update((self.obs[i].columns)) for i in self.obs]
+
+        cols_var = set()
+        [cols_var.update((self.var[i].columns)) for i in self.var]
+
+        mask_names = set()
+        [mask_names.update((self.masks[i].keys())) for i in self.masks]
+
+        graph_names = set()
+        [graph_names.update((self.G[i].keys())) for i in self.G]
+
+        s = f"""
+SpatialOmics object with n_obs {sum(l)}
+    X: {len(self.X)}, ({min(a0)}, {max(a0)}) x ({min(a1)}, {max(a1)})
+    spl: {len(self.spl)}, {cols_spl}
+    obs: {len(self.spl)}, {cols_obs}
+    var: {len(self.var)}, {cols_var}
+    G: {len(self.G)}, {graph_names}
+    masks: {len(self.masks)}, {mask_names}
+    images: {len(self.images)}"""
         return s
 
     def __repr__(self):
@@ -282,7 +306,7 @@ SpatialOmics object with
     def from_annData(ad: AnnData, img_container: ImageContainer = None,
           sample_id: str = 'sample_id',
           img_layer: str = 'image',
-          segmentation_layers: list = ['segmented_watershed']) -> SpatialOmics:
+          segmentation_layers: list = ['segmented_watershed']):
         """Converts a AnnData instance to a SpatialOmics instance.
 
         Args:
@@ -306,7 +330,7 @@ SpatialOmics object with
             sample_name = ad.obs[sample_id][0]
 
         so = SpatialOmics()
-        x = pd.DataFrame(ad.X.A, columns=ad.var.index)
+        x = pd.DataFrame(ad.X.A if issparse(ad.X) else ad.X, columns=ad.var.index)
 
         so.X = {sample_name: x}
         so.obs = {sample_name: ad.obs}

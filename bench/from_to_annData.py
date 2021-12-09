@@ -155,7 +155,7 @@ imc = sq.datasets.imc()
 so = ad2so(imc)
 sc.pl.spatial(imc, color="cell type", spot_size=10)
 
-# we have some overhead here as we need to convert to numeric types for our framework
+# we have some overhead here as we need to convert to numeric types for the ATHENA framework
 spl = list(so.obs.keys())[0]
 so.obs[spl]['cell_type_id'] = so.obs[spl].groupby('cell type').ngroup().astype('category')
 
@@ -256,7 +256,7 @@ so2 = so.deepcopy()
 # remove segmentation mask artefacts
 mask = so2.masks[spl]['segmented_watershed'].squeeze().to_numpy().copy()
 fig, ax = plt.subplots(1,2)
-ax[0].imshow(mask > 0); fig.show()
+ax[0].imshow(maska > 0); fig.show()
 mask[:1000, :1000] = 0
 ax[1].imshow(mask > 0); fig.show()
 fig.show()

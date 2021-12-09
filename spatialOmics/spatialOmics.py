@@ -2,8 +2,6 @@ import pandas as pd
 import networkx as nx
 from skimage import io
 import seaborn as sns
-from anndata import AnnData
-from squidpy.im import ImageContainer
 from scipy.sparse import issparse
 
 import os
@@ -303,7 +301,7 @@ SpatialOmics object with n_obs {sum(l)}
         return copy.deepcopy(self)
 
     @staticmethod
-    def from_annData(ad: AnnData, img_container: ImageContainer = None,
+    def from_annData(ad, img_container = None,
           sample_id: str = 'sample_id',
           img_layer: str = 'image',
           segmentation_layers: list = ['segmented_watershed']):

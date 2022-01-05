@@ -1,6 +1,6 @@
 #pip package names required by the package, and exact versions you know to work
-numpy
-pandas<1.3
+numpy>=1.19
+pandas==1.2
 scikit-image
 seaborn
 tqdm

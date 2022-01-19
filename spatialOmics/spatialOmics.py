@@ -242,9 +242,9 @@ SpatialOmics object with n_obs {sum(l)}
             # G
             if 'G' in f:
                 for spl in f['G'].keys():
+                    if spl not in so.G:
+                        so.G[spl] = {}
                     for key in f[f'G/{spl}'].keys():
-                        if key not in so.G:
-                            so.G[spl] = {}
                         so.G[spl][key] = nx.from_pandas_edgelist(pd.read_hdf(file, f'G/{spl}/{key}'))
 
             # images
@@ -257,9 +257,9 @@ SpatialOmics object with n_obs {sum(l)}
             # masks
             if 'masks' in f:
                 for spl in f['masks'].keys():
+                    if spl not in so.masks:
+                        so.masks[spl] = {}
                     for key in f[f'masks/{spl}']:
-                        if spl not in so.masks:
-                            so.masks[spl] = {}
                         so.masks[spl][key] = f[f'masks/{spl}/{key}'][...]
 
         return so

@@ -90,5 +90,5 @@ with tempfile.TemporaryDirectory() as tmpdir:
 
 # Installation
 ```{bash}
-pip install "git+git://github.com/histocartography/spatial-omics.git@master"
+pip install "git+https://github.com/AI4SCR/spatial-omics.git@master"
 ```

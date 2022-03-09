@@ -1,41 +1,19 @@
-# Spatial Omics
+# `SpatialOmics`
+The `SpatialOmics` class is designed to accommodate storing and processing spatial omics datasets in a technology-agnostic and memory-efficient way. A `SpatialOmics` instance incorporates multiple attributes that bundle together the multiplexed raw images with the segmentation masks, cell-cell graphs, single-cell values, and sample-, feature- and cell-level annotations, as outlined in the figure below. Since ATHENA works with multiplexed images, memory complexity is a problem. `SpatialOmics` stores data in a HDF5 file and lazily loads the required images on the fly to keep the memory consumption low. The `SpatialOmics` structure is sample-centric, i.e., all samples from a spatial omics experiment are stored separately by heavily using Python dictionaries. 
 
-Spatial omics technologies are an emergent field and currently no standard libraries or data structures exists for handling the generated data in a consistent way. To facilitate the development of this framework we introduce the _SpatialOmics_ class. Since we work with high-dimensional images, memory complexity is a problem. _SpatialOmics_ stores data in a HDF5 file and lazily loads the required images on the fly to keep the memory consumption low.
-The design of this class is inspred by _AnnData_, a class developed for the analysis of single-cell data sets.
+![overview](img/spatialOmics.png)
 
-**Objective**
-- Data standard for consistent method development
-- Technology-agnostic (resolutions, multiplexing and modalities )
+Specifically, each `SpatialOmics` instance contains the following attributes:
+1. `.images`: A Python dictionary (length: `#samples`) of raw multiplexed images, where each sample is mapped to a [numpy](https://numpy.org/) array of shape: `#features x image_width x image_height`.
+2. `.masks`: A nested Python dictionary (length: `#samples`) supporting different types of segmentation masks (e.g., cell and tissue masks), where each sample is mapped to an inner dictionary (length: `#mask_types`), and each value of the inner dictionary is a binary [numpy](https://numpy.org/) array of shape: `#image_width x image_height`.
+3. `.G`: A nested Python dictionary (length: `#samples`) supporting different topologies of graphs (e.g., knn, contact or radius graph), where each sample is mapped to an inner dictionary (length: `#graph_types`), and each value of the inner dictionary is a [networkx](https://networkx.org/) graph. 
+4. `.X`: A Python dictionary of single-cell measurements (length: `#samples`), where each sample is mapped to a [pandas](https://pandas.pydata.org/) dataframe of shape: `#single_cells x #features`. The values in `.X` can either be uploaded or directly computed from `.images` and `.masks`.
+5. `.spl`: A [pandas](https://pandas.pydata.org/) dataframe containing sample-level annotations (e.g., patient clinical data) of shape: `#samples x #annotations`.
+6. `.obs`: A Python dictionary (length: `#samples`) containing single-cell-level annotations (e.g., cluster id, cell type, morphological fatures), where each sample is mapped to a [pandas](https://pandas.pydata.org/) dataframe of shape: `#single_cells x #annotations`. 
+7. `.var`: A Python dictionary (length: `#samples`) containing feature-level annotations (e.g., name of protein/transcript), where each sample is mapped to a [pandas](https://pandas.pydata.org/) dataframe of shape: `#features x #annotations`. 
+8. `.uns`: A Python dictionary containing unstructed data, e.g. various colormaps, experiment properties etc.
 
-
-**Attributes**
-
-- **X**: Single-cell expression values (observations)
-- **var**: Annotation of features in X
-
-- **obs**: Annotation of observations
-
-- **spl**: Annotation of samples
-
-- **G**: Graph representation of observations
-
-- **images**: Raw images
-
-- **masks**: Segmentation masks
-
-- **uns**: Unstructured data
-
-
-![spatialOmics.png](img/spatialOmics.png)
-
-
-**Data hierarchy**
-
-- Sample-level information: patient features, acquisition details
-- Observation-level information: expression levels, coordinates, phenotyping
-![sample.png](img/sample.png)
-
-
+## Usage
 ```python
 import tarfile
 import tempfile
@@ -44,14 +22,12 @@ import os
 import pandas as pd
 ```
 
-
 ```python
 from spatialOmics import SpatialOmics
 
 # create empty instance
 so = SpatialOmics()
 ```
-
 
 ```python
 import urllib.request
@@ -61,7 +37,6 @@ import tarfile
 url = 'https://ndownloader.figshare.com/files/29006556'
 filehandle, _ = urllib.request.urlretrieve(url)
 ```
-
 
 ```python
 # extract images from tar archive
@@ -88,7 +63,7 @@ with tempfile.TemporaryDirectory() as tmpdir:
         so.add_mask(so.spl.index[0], 'cellmasks', os.path.join(tmpdir, root, fmask), to_store=False)
 ```
 
-# Installation
+## Installation
 ```{bash}
 pip install "git+https://github.com/AI4SCR/spatial-omics.git@master"
 ```

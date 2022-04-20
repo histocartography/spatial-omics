@@ -43,7 +43,7 @@ class SpatialOmics:
 
     def add_image(self, spl, file, in_memory=True, to_store=True):
         """Add the image for a given sample"""
-        im = io.imread(file)
+        im = io.imread(file, plugin="tifffile")
 
         if to_store:
             path = f'images/{spl}'

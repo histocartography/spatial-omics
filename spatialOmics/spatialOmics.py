@@ -41,7 +41,7 @@ class SpatialOmics:
         self.images = {}
         self.masks = {}
 
-    def add_image(self, spl, file, in_memory=True, to_store=True):
+    def add_image(self, spl, file, in_memory=True, to_store=False):
         """Add the image for a given sample"""
         im = io.imread(file, plugin="tifffile")
 
@@ -69,7 +69,7 @@ class SpatialOmics:
                 else:
                     raise KeyError(f'no images exists for {spl}.')
 
-    def add_mask(self, spl, mask, file, in_memory=True, to_store=True):
+    def add_mask(self, spl, mask, file, in_memory=True, to_store=False):
         """Add a mask for a given sample"""
         im = io.imread(file)
 

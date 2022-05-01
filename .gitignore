@@ -115,3 +115,6 @@ venv.bak/
 *.tif?
 *.swp
 /bench
+
+.DS_Store
+*/.DS_Store

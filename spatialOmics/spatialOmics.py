@@ -3,6 +3,7 @@ import networkx as nx
 from skimage import io
 import seaborn as sns
 from scipy.sparse import issparse
+import numpy as np
 
 import os
 import copy
@@ -71,7 +72,9 @@ class SpatialOmics:
 
     def add_mask(self, spl, mask, file, in_memory=True, to_store=False):
         """Add a mask for a given sample"""
-        im = io.imread(file)
+        im = np.squeeze(io.imread(file))
+        if im.ndim != 2:
+            raise ValueError('provided mask image is not 2D')
 
         if to_store:
             path = f'masks/{spl}/{mask}'
